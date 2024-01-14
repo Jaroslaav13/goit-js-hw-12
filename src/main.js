@@ -4,6 +4,8 @@ import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 import axios from 'axios';
 
+
+// ________________BASE-CONST_____________
 const BASE_URL = 'https://pixabay.com/api';
 const options = {
   key: '41496485-2e747cbe724a23cc88d300532',
@@ -20,31 +22,19 @@ const refs = {
   btnSearch: document.querySelector('.search-btn'),
   gallery: document.querySelector('.gallery'),
 };
+// ______________________________________________
 
 const loader = document.createElement('div');
-loader.classList.add('loader');
+loader.className = 'loader';
 
-refs.searchForm.addEventListener('submit', async e => {
+refs.searchForm.addEventListener('submit', e => {
   e.preventDefault();
-
-  const search = refs.inputSearch.value.trim();
-
-  if (search) {
-    options.page += 1;
-
-    try {
-      const data = await fetchImages(search);
-      renderGallery(data.hits);
-    } catch (error) {
-      console.log(error);
-      displayErrorMessage(error.message);
-    } finally {
-      loader.remove();
-    }
-  } else {
-    displayErrorMessage('Введите запрос');
-  }
+  const name = refs.inputSearch.value;
+  refs.gallery.appendChild(loader);
+  loader.style.display = 'block';
+  fetchImages(name);
 });
+
 
 function displayErrorMessage(message) {
   iziToast.error({
@@ -55,6 +45,7 @@ function displayErrorMessage(message) {
   });
 }
 
+
 const fetchImages = async (name) => {
   options.q = name;
 
@@ -62,12 +53,17 @@ const fetchImages = async (name) => {
     const response = await axios.get(`${BASE_URL}`, {
       params: options
     });
+    const data = response.data;
+    
+    if (data.hits.length === 0) {
+         displayErrorMessage("Sorry, there are no images matching your search query. Please try again!")
+         return
+      }
 
-    if (response.data.hits.length === 0) {
-      throw new Error('Нет результатов');
-    }
+    renderGallery(data.hits);
+      console.log(data);
 
-    return response.data;
+      refs.inputSearch.value = '';
   } catch (error) {
     console.log(error);
     displayErrorMessage('API request error');
