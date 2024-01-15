@@ -13,6 +13,7 @@ const options = {
   safesearch: true,
   page: 1,
   per_page: 40,
+ 
 };
 
 const refs = {
@@ -26,6 +27,8 @@ const refs = {
 
 const loader = document.createElement('div');
 loader.className = 'loader';
+
+let cardHeight;
 
 refs.searchForm.addEventListener('submit', e => {
   e.preventDefault();
@@ -49,7 +52,7 @@ function displayErrorMessage(message) {
     backgroundColor: '#EF4040',
   });
 }
-
+// _____________
 let name = '';
 const fetchImages = async name => {
   options.q = name;
@@ -62,13 +65,15 @@ const fetchImages = async name => {
     const data = response.data;
 
     renderGallery(data.hits);
+    cardHeight = document.querySelector('.gallery-item').getBoundingClientRect().height;
+     await sleep(700);
+    window.scrollBy(0, 2 * cardHeight);
     console.log(data);
 
      if (data.hits.length >= options.per_page) {
       refs.btnLoad.style.display = 'block';
     }
-
-    // Виведення повідомлення при досягненні кінця результатів
+    
     if (data.totalHits <= options.per_page * options.page) {
       displayErrorMessage("We're sorry, but you've reached the end of search results.");
     }
@@ -138,6 +143,9 @@ async function onLoadMore() {
     }
 
     appendToGallery(data.hits);
+
+     await sleep(700);
+    window.scrollBy(0, 2 * cardHeight);
     console.log(data);
 
     if (data.hits.length >= options.per_page && data.totalHits > options.per_page * options.page) {
@@ -191,4 +199,8 @@ function appendToGallery(images) {
     captionDelay: 250,
     captionsDataAlt: 'image.tags',
   });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
