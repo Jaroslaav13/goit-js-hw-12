@@ -23,24 +23,27 @@ const refs = {
   gallery: document.querySelector('.gallery'),
   btnLoad: document.querySelector('.load-btn'),
 };
+
+const newGallery = new SimpleLightbox('.gallery a', {
+    captionsData: 'alt',
+    captionDelay: 250,
+    captionsDataAlt: 'image.tags',
+  });
 // ______________________________________________
 
 const loader = document.createElement('div');
 loader.className = 'loader';
 
-let cardHeight;
-
 refs.searchForm.addEventListener('submit', e => {
   e.preventDefault();
-
   const name = refs.inputSearch.value.trim();
-
  if (name) {
     refs.gallery.appendChild(loader);
-    loader.style.display = 'block';
+   loader.style.display = 'block';
+    options.page = 1;
     fetchImages(name);
   } else {
-    displayErrorMessage('Sorry, there are no images matching your search query. Please try again!');
+    displayErrorMessage('The input field is empty, please enter a name to search!');
   }
 });
 
@@ -53,6 +56,7 @@ function displayErrorMessage(message) {
   });
 }
 // _____________
+
 let name = '';
 const fetchImages = async name => {
   options.q = name;
@@ -65,22 +69,21 @@ const fetchImages = async name => {
     const data = response.data;
 
     renderGallery(data.hits);
-    cardHeight = document.querySelector('.gallery-item').getBoundingClientRect().height;
-     await sleep(700);
-    window.scrollBy(0, 2 * cardHeight);
-    console.log(data);
+    newGallery.refresh();
+     console.log(data);
 
      if (data.hits.length >= options.per_page) {
       refs.btnLoad.style.display = 'block';
     }
     
     if (data.totalHits <= options.per_page * options.page) {
-      displayErrorMessage("We're sorry, but you've reached the end of search results.");
+      refs.btnLoad.style.display = 'none';
+      displayErrorMessage("Sorry, there are no images matching your search query. Please try again!");
     }
     refs.inputSearch.value = '';
   } catch (error) {
     console.log(error);
-    displayErrorMessage('API request error');
+    displayErrorMessage('Sorry, there are no images matching your search query. Please try again!');
   } finally {
     loader.remove();
   }
@@ -116,12 +119,7 @@ function renderGallery(images) {
   refs.gallery.innerHTML = '';
   refs.gallery.insertAdjacentHTML('afterbegin', listEl);
 
-  const newGallery = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-    captionsDataAlt: 'image.tags',
-  });
-}
+  }
 
 // ___кнопка давай еще____
 
@@ -137,15 +135,13 @@ async function onLoadMore() {
 
     const data = response.data;
 
-    if (data.hits.length === 0) {
-      displayErrorMessage('Sorry, there are no more images.');
-      return;
-    }
-
     appendToGallery(data.hits);
-
-     await sleep(700);
-    window.scrollBy(0, 2 * cardHeight);
+    newGallery.refresh();
+let cardHeight = document.querySelector('.gallery-item').getBoundingClientRect().height;
+    window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth',
+      });
     console.log(data);
 
     if (data.hits.length >= options.per_page && data.totalHits > options.per_page * options.page) {
@@ -194,11 +190,6 @@ function appendToGallery(images) {
   refs.gallery.insertAdjacentHTML('beforeend', listEl);
 
   
-  const newGallery = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-    captionsDataAlt: 'image.tags',
-  });
 }
 
 function sleep(ms) {
